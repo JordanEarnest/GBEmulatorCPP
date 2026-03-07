@@ -1,6 +1,7 @@
 # GBEmulatorCPP 🎮
 ## Description
 An emulator for the Game Boy written in C++.
+![Image of Game Boy](https://en.wikipedia.org/wiki/Game_Boy)
 ## How to Use
 ### Linux
 1. Clone the repository
