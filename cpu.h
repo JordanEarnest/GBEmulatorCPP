@@ -26,6 +26,8 @@ private:
 
     // Determines if CPU is in a STOPPED state (low power mode for saving)
     bool stopped;
+    // Interrupt Master Enable Flag
+    bool ime;
     
 public:
     // Defines the CPU cycles per second
