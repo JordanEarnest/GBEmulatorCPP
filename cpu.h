@@ -23,6 +23,9 @@ struct Registers {
 class CPU {
 private:
     Memory& memory;
+
+    // Determines if CPU is in a STOPPED state (low power mode for saving)
+    bool stopped;
     
 public:
     // Defines the CPU cycles per second

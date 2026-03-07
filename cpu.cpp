@@ -14,13 +14,15 @@ CPU::CPU(Memory& mem) : memory(mem) {
     regs.H = 0x01;
     regs.L = 0x4D;
 
-    // regs.IR = 0x00; not used like this
     regs.IE = 0x00;
 
     // SP starts at 0xFFFE
     regs.SP = 0xFFFE;
     // PC starts at 0x0100 for actual game code, everything before is boot ROM data
     regs.PC = 0x0100;
+
+    // Determines if CPU is in a STOPPED state (low power mode for saving)
+    stopped = false;
 };
 
 int CPU::step() {
@@ -43,9 +45,9 @@ int CPU::execute(uint8_t opcode) {
     /*
         Flags: stored in bits 7, 6, 5, 4 in reg F respectively
         Z = result == 0
-        N = 0
+        N = SUBSTRACT == 1
         H = lower nibble overflow
-        C = unchanged
+        C = carry
     */
     switch (opcode) {
         // NOP
@@ -95,7 +97,6 @@ int CPU::execute(uint8_t opcode) {
             
             return 4;
         }
-
         // DEC B
         case 0x05: {
             uint8_t result = regs.B - 1;
@@ -110,7 +111,7 @@ int CPU::execute(uint8_t opcode) {
             regs.F |= 0x40;
 
             // H flag
-            if ((regs.B & 0xFF) + 1 > 0x0F)
+            if ((regs.B & 0xFF) == 0)
                 regs.F |= 0x20; 
             else
                 regs.F &= ~0x20;
@@ -119,25 +120,38 @@ int CPU::execute(uint8_t opcode) {
             
             return 4;
         }
-
         // LD, B, n
         case 0x06: {
             regs.B = memory.read(regs.PC++); // get next byte which is immediate value n
             return 8; // # of cycles
         }
-        
         // RLCA 
         case 0x07: {
-            uint8_t result = regs.A << 1 | regs.A >> 7;
+            uint8_t carry = regs.A & 0x80;
+            uint8_t shiftL = regs.A << 1;
 
-            // Set C
-            regs.F = (regs.A >> 7) << 4;
-     
+            // add carry to most significant bit (wrap-around)
+            uint8_t result = shiftL | (carry >> 7);
+
+            // Flag Z set 0
+            regs.F &= ~0x80;
+
+            // Flag N set 0
+            regs.F &= ~0x40;
+
+            // Flag H set 0
+            regs.F &= ~0x20;
+
+            // Flag C
+            if (carry == 0x80)
+                regs.F |= 0x10;
+            else
+                regs.F &= ~0x10;
+
             regs.A = result;
 
             return 4;
         }
-
         // LD [a16], SP
         case 0x08: {
             uint16_t nn_lsb = memory.read(regs.PC++);
@@ -149,7 +163,6 @@ int CPU::execute(uint8_t opcode) {
 
             return 20; // # of cycles
         }
-
         // ADD HL, BC
         case 0x09: {
             uint32_t result = regHL() + regBC();
@@ -174,16 +187,13 @@ int CPU::execute(uint8_t opcode) {
             regs.H = (result >> 8) & 0xFF;
             regs.L = (result & 0xFF);
 
-
             return 8;
         }
-
         // LD A, [BC]
         case 0x0A: {
             regs.A = memory.read(regBC());
             return 8;
         }
-
         // DEC BC
         case 0x0B: {
             uint16_t result = regBC() - 1;
@@ -193,16 +203,192 @@ int CPU::execute(uint8_t opcode) {
             
             return 8;
         }
-
         // INC C
         case 0x0C: {
             uint8_t result = regs.C + 1;
 
             // Z flag
+            if (result == 0)
+                regs.F |= 0x80;
+            else
+                regs.F &= ~0x80;
 
+            // N flag set to 0
+            regs.F &= ~0x40;
 
+            // H flag, carry from bit 3 to bit 4
+            if ((regs.C & 0x0F) + 1 > 0x0F)
+                regs.F |= 0x20;
+            else
+                regs.F &= ~0x20;
+
+            // C flag, none
 
             regs.C = result;
+
+            return 4;
+        }
+        // DEC C
+        case 0x0D: {
+            uint8_t result = regs.C - 1;
+
+            // Z flag
+            if (result == 0)
+                regs.F |= 0x80;
+            else
+                regs.F &= ~0x80;
+
+            // N flag set to 1
+            regs.F |= 0x40;
+
+            // H flag, carry from bit 3 to bit 4 and vice versa
+            if ((regs.C & 0x0F) == 0)
+                regs.F |= 0x20;
+            else
+                regs.F &= ~0x20;
+
+            // C flag, none
+
+            regs.C = result;
+
+            return 4;
+        }
+        // LD C, n8
+        case 0x0E: {
+            uint8_t n8 = memory.read(regs.PC++);
+            regs.C = n8;
+            return 8;
+        }
+        // RRCA
+        case 0x0F: {
+            uint8_t carry = regs.A & 0x01;
+            uint8_t shiftR = regs.A >> 1;
+
+            // add carry to most significant bit (wrap-around)
+            uint8_t result = shiftR | (carry << 7);
+
+            // Flag Z set 0
+            regs.F &= ~0x80;
+
+            // Flag N set 0
+            regs.F &= ~0x40;
+
+            // Flag H set 0
+            regs.F &= ~0x20;
+
+            // Flag C
+            if (carry == 0x01)
+                regs.F |= 0x10;
+            else
+                regs.F &= ~0x10;
+
+            regs.A = result;
+
+            return 4;
+        }
+        // STOP n8
+        case 0x10: {
+            stopped = true;
+            regs.PC++; // skip padding byte n8, usually 0x00
+            return 4;
+        }
+        // LD DE, n16
+        case 0x11: {
+            uint8_t lsb = memory.read(regs.PC++);
+            uint8_t msb = memory.read(regs.PC++);
+            regs.D = msb;
+            regs.E = lsb;
+            return 12;
+        }
+        // LD [DE], A
+        case 0x12: {
+            memory.write(regDE(), regs.A);
+            return 8;
+        }
+        // INC DE
+        case 0x13: {
+            uint16_t DE = regDE();
+            DE++;
+            regs.D = DE >> 8; // msb
+            regs.E = DE & 0xFF; // lsb
+            return 8;
+        }
+        // INC D
+        case 0x14: {
+            uint8_t result = regs.D + 1;
+
+            // Z flag
+            if (result == 0) 
+                regs.F |= 0x80;
+            else
+                regs.F &= ~0x80;
+
+            // N flag cleared
+            regs.F &= ~0x40;
+
+            // H flag
+            if ((regs.D & 0xFF) + 1 > 0x0F)
+                regs.F |= 0x20; 
+            else
+                regs.F &= ~0x20;
+
+            regs.D = result;
+            
+            return 4;
+        }
+        // DEC D
+        case 0x15: {
+            uint8_t result = regs.D - 1;
+
+            // Z flag
+            if (result == 0) 
+                regs.F |= 0x80;
+            else
+                regs.F &= ~0x80;
+
+            // N flag set to 1
+            regs.F |= 0x40;
+
+            // H flag
+            if ((regs.D & 0xFF) == 0)
+                regs.F |= 0x20; 
+            else
+                regs.F &= ~0x20;
+
+            regs.D = result;
+            
+            return 4;
+        }
+        // LD D, n8
+        case 0x16: {
+            regs.D = memory.read(regs.PC++); // get next byte which is immediate value n
+            return 8; // # of cycles
+        }
+        // RLA
+        case 0x17: {
+            uint8_t oldCarry = (regs.F & 0x10) >> 4;
+            uint8_t newCarry = (regs.A & 0x80) >> 7;
+            uint8_t shiftL = regs.A << 1;
+
+            // add carry to most significant bit (wrap-around)
+            uint8_t result = shiftL | oldCarry;
+
+            // Flag Z set 0
+            regs.F &= ~0x80;
+
+            // Flag N set 0
+            regs.F &= ~0x40;
+
+            // Flag H set 0
+            regs.F &= ~0x20;
+
+            // Flag C
+            if (newCarry)
+                regs.F |= 0x10;
+            else
+                regs.F &= ~0x10;
+
+            regs.A = result;
 
             return 4;
         }
@@ -240,11 +426,6 @@ int CPU::execute(uint8_t opcode) {
             regs.A = memory.read(regDE());
             return 8; // # of cycles
 
-        // Load From Accumulator (indirect DE), example: LD (DE), A
-        // Load to the absolute address specified by the 16-bit register DE, data from the 8-bit A register
-        case 0x12:
-            memory.write(regDE(), regs.A);
-            return 8; // # of cycles
 
         // Load Accumulator (direct), example: LD A, (nn)
         // Load to the 8-bit A register, data from the absolute address specified by the 16-bit operand nn

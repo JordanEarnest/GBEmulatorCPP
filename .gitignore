@@ -1,0 +1,5 @@
+cartridge.o
+cpu.o
+gbemu
+main.o
+pokemon.gb
