@@ -40,8 +40,10 @@ public:
     int step();
     // Fetch opcode from ROM
     uint8_t fetch();
-    // Execute unique opcodes, returns number of cycles executing opcode requires
+    // Execute unique unprefixed opcodes, returns number of cycles executing opcode requires
     int execute(uint8_t opcode);
+    // Execute unique unprefixed opcodes, returns number of cycles executing opcode requires
+    int executePrefixed(uint8_t opcode);
 
 private:
     // Helper methods to get 16 bit register pairs
