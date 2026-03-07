@@ -3659,6 +3659,2099 @@ int CPU::execute(uint8_t opcode) {
     }
 }
 
+int CPU::executePrefixed(uint8_t opcode) {
+    // Prefixed opcodes, or opcodes that were immediately after a 0xCB prefix instruction
+    switch (opcode) {
+        // RLC B
+        case 0x00: {
+            uint8_t carry = (regs.B & 0x80) >> 7;
+            regs.B = (regs.B << 1) | carry;
+
+            regs.F = 0;
+            if (regs.B == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // RLC C
+        case 0x01: {
+            uint8_t carry = (regs.C & 0x80) >> 7;
+            regs.C = (regs.C << 1) | carry;
+
+            regs.F = 0;
+            if (regs.C == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // RLC D
+        case 0x02: {
+            uint8_t carry = (regs.D & 0x80) >> 7;
+            regs.D = (regs.D << 1) | carry;
+
+            regs.F = 0;
+            if (regs.D == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // RLC E
+        case 0x03: {
+            uint8_t carry = (regs.E & 0x80) >> 7;
+            regs.E = (regs.E << 1) | carry;
+
+            regs.F = 0;
+            if (regs.E == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // RLC H
+        case 0x04: {
+            uint8_t carry = (regs.H & 0x80) >> 7;
+            regs.H = (regs.H << 1) | carry;
+
+            regs.F = 0;
+            if (regs.H == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // RLC L
+        case 0x05: {
+            uint8_t carry = (regs.L & 0x80) >> 7;
+            regs.L = (regs.L << 1) | carry;
+
+            regs.F = 0;
+            if (regs.L == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // RLC (HL)
+        case 0x06: {
+            uint16_t addr = unsigned_16(regs.H, regs.L);
+            uint8_t value = memory.read(addr);
+
+            uint8_t carry = (value & 0x80) >> 7;
+            value = (value << 1) | carry;
+
+            memory.write(addr, value);
+
+            regs.F = 0;
+            if (value == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 12;
+        }
+
+        // RLC A
+        case 0x07: {
+            uint8_t carry = (regs.A & 0x80) >> 7;
+            regs.A = (regs.A << 1) | carry;
+
+            regs.F = 0;
+            if (regs.A == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // RRC B
+        case 0x08: {
+            uint8_t carry = regs.B & 0x01;
+            regs.B = (regs.B >> 1) | (carry << 7);
+
+            regs.F = 0;
+            if (regs.B == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // RRC C
+        case 0x09: {
+            uint8_t carry = regs.C & 0x01;
+            regs.C = (regs.C >> 1) | (carry << 7);
+
+            regs.F = 0;
+            if (regs.C == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // RRC D
+        case 0x0A: {
+            uint8_t carry = regs.D & 0x01;
+            regs.D = (regs.D >> 1) | (carry << 7);
+
+            regs.F = 0;
+            if (regs.D == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // RRC E
+        case 0x0B: {
+            uint8_t carry = regs.E & 0x01;
+            regs.E = (regs.E >> 1) | (carry << 7);
+
+            regs.F = 0;
+            if (regs.E == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // RRC H
+        case 0x0C: {
+            uint8_t carry = regs.H & 0x01;
+            regs.H = (regs.H >> 1) | (carry << 7);
+
+            regs.F = 0;
+            if (regs.H == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // RRC L
+        case 0x0D: {
+            uint8_t carry = regs.L & 0x01;
+            regs.L = (regs.L >> 1) | (carry << 7);
+
+            regs.F = 0;
+            if (regs.L == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // RRC (HL)
+        case 0x0E: {
+            uint16_t addr = unsigned_16(regs.H, regs.L);
+            uint8_t value = memory.read(addr);
+
+            uint8_t carry = value & 0x01;
+            value = (value >> 1) | (carry << 7);
+
+            memory.write(addr, value);
+
+            regs.F = 0;
+            if (value == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 12;
+        }
+
+        // RRC A
+        case 0x0F: {
+            uint8_t carry = regs.A & 0x01;
+            regs.A = (regs.A >> 1) | (carry << 7);
+
+            regs.F = 0;
+            if (regs.A == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+        // RL B
+        case 0x10: {
+            uint8_t oldCarry = (regs.F & 0x10) >> 4;
+            uint8_t carry = (regs.B & 0x80) >> 7;
+            regs.B = (regs.B << 1) | oldCarry;
+
+            regs.F = 0;
+            if (regs.B == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // RL C
+        case 0x11: {
+            uint8_t oldCarry = (regs.F & 0x10) >> 4;
+            uint8_t carry = (regs.C & 0x80) >> 7;
+            regs.C = (regs.C << 1) | oldCarry;
+
+            regs.F = 0;
+            if (regs.C == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // RL D
+        case 0x12: {
+            uint8_t oldCarry = (regs.F & 0x10) >> 4;
+            uint8_t carry = (regs.D & 0x80) >> 7;
+            regs.D = (regs.D << 1) | oldCarry;
+
+            regs.F = 0;
+            if (regs.D == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // RL E
+        case 0x13: {
+            uint8_t oldCarry = (regs.F & 0x10) >> 4;
+            uint8_t carry = (regs.E & 0x80) >> 7;
+            regs.E = (regs.E << 1) | oldCarry;
+
+            regs.F = 0;
+            if (regs.E == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // RL H
+        case 0x14: {
+            uint8_t oldCarry = (regs.F & 0x10) >> 4;
+            uint8_t carry = (regs.H & 0x80) >> 7;
+            regs.H = (regs.H << 1) | oldCarry;
+
+            regs.F = 0;
+            if (regs.H == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // RL L
+        case 0x15: {
+            uint8_t oldCarry = (regs.F & 0x10) >> 4;
+            uint8_t carry = (regs.L & 0x80) >> 7;
+            regs.L = (regs.L << 1) | oldCarry;
+
+            regs.F = 0;
+            if (regs.L == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // RL (HL)
+        case 0x16: {
+            uint16_t addr = unsigned_16(regs.H, regs.L);
+            uint8_t value = memory.read(addr);
+
+            uint8_t oldCarry = (regs.F & 0x10) >> 4;
+            uint8_t carry = (value & 0x80) >> 7;
+            value = (value << 1) | oldCarry;
+
+            memory.write(addr, value);
+
+            regs.F = 0;
+            if (value == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 12;
+        }
+
+        // RL A
+        case 0x17: {
+            uint8_t oldCarry = (regs.F & 0x10) >> 4;
+            uint8_t carry = (regs.A & 0x80) >> 7;
+            regs.A = (regs.A << 1) | oldCarry;
+
+            regs.F = 0;
+            if (regs.A == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // RR B
+        case 0x18: {
+            uint8_t oldCarry = (regs.F & 0x10) >> 4;
+            uint8_t carry = regs.B & 0x01;
+            regs.B = (regs.B >> 1) | (oldCarry << 7);
+
+            regs.F = 0;
+            if (regs.B == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // RR C
+        case 0x19: {
+            uint8_t oldCarry = (regs.F & 0x10) >> 4;
+            uint8_t carry = regs.C & 0x01;
+            regs.C = (regs.C >> 1) | (oldCarry << 7);
+
+            regs.F = 0;
+            if (regs.C == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // RR D
+        case 0x1A: {
+            uint8_t oldCarry = (regs.F & 0x10) >> 4;
+            uint8_t carry = regs.D & 0x01;
+            regs.D = (regs.D >> 1) | (oldCarry << 7);
+
+            regs.F = 0;
+            if (regs.D == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // RR E
+        case 0x1B: {
+            uint8_t oldCarry = (regs.F & 0x10) >> 4;
+            uint8_t carry = regs.E & 0x01;
+            regs.E = (regs.E >> 1) | (oldCarry << 7);
+
+            regs.F = 0;
+            if (regs.E == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // RR H
+        case 0x1C: {
+            uint8_t oldCarry = (regs.F & 0x10) >> 4;
+            uint8_t carry = regs.H & 0x01;
+            regs.H = (regs.H >> 1) | (oldCarry << 7);
+
+            regs.F = 0;
+            if (regs.H == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // RR L
+        case 0x1D: {
+            uint8_t oldCarry = (regs.F & 0x10) >> 4;
+            uint8_t carry = regs.L & 0x01;
+            regs.L = (regs.L >> 1) | (oldCarry << 7);
+
+            regs.F = 0;
+            if (regs.L == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // RR (HL)
+        case 0x1E: {
+            uint16_t addr = unsigned_16(regs.H, regs.L);
+            uint8_t value = memory.read(addr);
+
+            uint8_t oldCarry = (regs.F & 0x10) >> 4;
+            uint8_t carry = value & 0x01;
+            value = (value >> 1) | (oldCarry << 7);
+
+            memory.write(addr, value);
+
+            regs.F = 0;
+            if (value == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 12;
+        }
+
+        // RR A
+        case 0x1F: {
+            uint8_t oldCarry = (regs.F & 0x10) >> 4;
+            uint8_t carry = regs.A & 0x01;
+            regs.A = (regs.A >> 1) | (oldCarry << 7);
+
+            regs.F = 0;
+            if (regs.A == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+        // SLA B
+        case 0x20: {
+            uint8_t carry = (regs.B & 0x80) >> 7;
+            regs.B <<= 1;
+
+            regs.F = 0;
+            if (regs.B == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // SLA C
+        case 0x21: {
+            uint8_t carry = (regs.C & 0x80) >> 7;
+            regs.C <<= 1;
+
+            regs.F = 0;
+            if (regs.C == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // SLA D
+        case 0x22: {
+            uint8_t carry = (regs.D & 0x80) >> 7;
+            regs.D <<= 1;
+
+            regs.F = 0;
+            if (regs.D == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // SLA E
+        case 0x23: {
+            uint8_t carry = (regs.E & 0x80) >> 7;
+            regs.E <<= 1;
+
+            regs.F = 0;
+            if (regs.E == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // SLA H
+        case 0x24: {
+            uint8_t carry = (regs.H & 0x80) >> 7;
+            regs.H <<= 1;
+
+            regs.F = 0;
+            if (regs.H == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // SLA L
+        case 0x25: {
+            uint8_t carry = (regs.L & 0x80) >> 7;
+            regs.L <<= 1;
+
+            regs.F = 0;
+            if (regs.L == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // SLA (HL)
+        case 0x26: {
+            uint16_t addr = unsigned_16(regs.H, regs.L);
+            uint8_t value = memory.read(addr);
+
+            uint8_t carry = (value & 0x80) >> 7;
+            value <<= 1;
+
+            memory.write(addr, value);
+
+            regs.F = 0;
+            if (value == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 12;
+        }
+
+        // SLA A
+        case 0x27: {
+            uint8_t carry = (regs.A & 0x80) >> 7;
+            regs.A <<= 1;
+
+            regs.F = 0;
+            if (regs.A == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // SRA B
+        case 0x28: {
+            uint8_t carry = regs.B & 0x01;
+            uint8_t msb = regs.B & 0x80;
+            regs.B = (regs.B >> 1) | msb;
+
+            regs.F = 0;
+            if (regs.B == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // SRA C
+        case 0x29: {
+            uint8_t carry = regs.C & 0x01;
+            uint8_t msb = regs.C & 0x80;
+            regs.C = (regs.C >> 1) | msb;
+
+            regs.F = 0;
+            if (regs.C == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // SRA D
+        case 0x2A: {
+            uint8_t carry = regs.D & 0x01;
+            uint8_t msb = regs.D & 0x80;
+            regs.D = (regs.D >> 1) | msb;
+
+            regs.F = 0;
+            if (regs.D == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // SRA E
+        case 0x2B: {
+            uint8_t carry = regs.E & 0x01;
+            uint8_t msb = regs.E & 0x80;
+            regs.E = (regs.E >> 1) | msb;
+
+            regs.F = 0;
+            if (regs.E == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // SRA H
+        case 0x2C: {
+            uint8_t carry = regs.H & 0x01;
+            uint8_t msb = regs.H & 0x80;
+            regs.H = (regs.H >> 1) | msb;
+
+            regs.F = 0;
+            if (regs.H == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // SRA L
+        case 0x2D: {
+            uint8_t carry = regs.L & 0x01;
+            uint8_t msb = regs.L & 0x80;
+            regs.L = (regs.L >> 1) | msb;
+
+            regs.F = 0;
+            if (regs.L == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // SRA (HL)
+        case 0x2E: {
+            uint16_t addr = unsigned_16(regs.H, regs.L);
+            uint8_t value = memory.read(addr);
+
+            uint8_t carry = value & 0x01;
+            uint8_t msb = value & 0x80;
+            value = (value >> 1) | msb;
+
+            memory.write(addr, value);
+
+            regs.F = 0;
+            if (value == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 12;
+        }
+
+        // SRA A
+        case 0x2F: {
+            uint8_t carry = regs.A & 0x01;
+            uint8_t msb = regs.A & 0x80;
+            regs.A = (regs.A >> 1) | msb;
+
+            regs.F = 0;
+            if (regs.A == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+        // SWAP B
+        case 0x30: {
+            regs.B = (regs.B << 4) | (regs.B >> 4);
+
+            regs.F = 0;
+            if (regs.B == 0) regs.F |= 0x80;
+
+            return 4;
+        }
+
+        // SWAP C
+        case 0x31: {
+            regs.C = (regs.C << 4) | (regs.C >> 4);
+
+            regs.F = 0;
+            if (regs.C == 0) regs.F |= 0x80;
+
+            return 4;
+        }
+
+        // SWAP D
+        case 0x32: {
+            regs.D = (regs.D << 4) | (regs.D >> 4);
+
+            regs.F = 0;
+            if (regs.D == 0) regs.F |= 0x80;
+
+            return 4;
+        }
+
+        // SWAP E
+        case 0x33: {
+            regs.E = (regs.E << 4) | (regs.E >> 4);
+
+            regs.F = 0;
+            if (regs.E == 0) regs.F |= 0x80;
+
+            return 4;
+        }
+
+        // SWAP H
+        case 0x34: {
+            regs.H = (regs.H << 4) | (regs.H >> 4);
+
+            regs.F = 0;
+            if (regs.H == 0) regs.F |= 0x80;
+
+            return 4;
+        }
+
+        // SWAP L
+        case 0x35: {
+            regs.L = (regs.L << 4) | (regs.L >> 4);
+
+            regs.F = 0;
+            if (regs.L == 0) regs.F |= 0x80;
+
+            return 4;
+        }
+
+        // SWAP (HL)
+        case 0x36: {
+            uint16_t addr = unsigned_16(regs.H, regs.L);
+            uint8_t value = memory.read(addr);
+
+            value = (value << 4) | (value >> 4);
+            memory.write(addr, value);
+
+            regs.F = 0;
+            if (value == 0) regs.F |= 0x80;
+
+            return 12;
+        }
+
+        // SWAP A
+        case 0x37: {
+            regs.A = (regs.A << 4) | (regs.A >> 4);
+
+            regs.F = 0;
+            if (regs.A == 0) regs.F |= 0x80;
+
+            return 4;
+        }
+
+        // SRL B
+        case 0x38: {
+            uint8_t carry = regs.B & 0x01;
+            regs.B >>= 1;
+
+            regs.F = 0;
+            if (regs.B == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // SRL C
+        case 0x39: {
+            uint8_t carry = regs.C & 0x01;
+            regs.C >>= 1;
+
+            regs.F = 0;
+            if (regs.C == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // SRL D
+        case 0x3A: {
+            uint8_t carry = regs.D & 0x01;
+            regs.D >>= 1;
+
+            regs.F = 0;
+            if (regs.D == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // SRL E
+        case 0x3B: {
+            uint8_t carry = regs.E & 0x01;
+            regs.E >>= 1;
+
+            regs.F = 0;
+            if (regs.E == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // SRL H
+        case 0x3C: {
+            uint8_t carry = regs.H & 0x01;
+            regs.H >>= 1;
+
+            regs.F = 0;
+            if (regs.H == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // SRL L
+        case 0x3D: {
+            uint8_t carry = regs.L & 0x01;
+            regs.L >>= 1;
+
+            regs.F = 0;
+            if (regs.L == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+
+        // SRL (HL)
+        case 0x3E: {
+            uint16_t addr = unsigned_16(regs.H, regs.L);
+            uint8_t value = memory.read(addr);
+
+            uint8_t carry = value & 0x01;
+            value >>= 1;
+
+            memory.write(addr, value);
+
+            regs.F = 0;
+            if (value == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 12;
+        }
+
+        // SRL A
+        case 0x3F: {
+            uint8_t carry = regs.A & 0x01;
+            regs.A >>= 1;
+
+            regs.F = 0;
+            if (regs.A == 0) regs.F |= 0x80;
+            if (carry) regs.F |= 0x10;
+
+            return 4;
+        }
+        // BIT 0,B
+        case 0x40: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.B & (1 << 0))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 0,C
+        case 0x41: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.C & (1 << 0))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 0,D
+        case 0x42: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.D & (1 << 0))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 0,E
+        case 0x43: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.E & (1 << 0))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 0,H
+        case 0x44: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.H & (1 << 0))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 0,L
+        case 0x45: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.L & (1 << 0))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 0,(HL)
+        case 0x46: {
+            uint8_t value = memory.read(unsigned_16(regs.H, regs.L));
+
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(value & (1 << 0))) regs.F |= 0x80;
+
+            return 8;
+        }
+
+        // BIT 0,A
+        case 0x47: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.A & (1 << 0))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 1,B
+        case 0x48: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.B & (1 << 1))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 1,C
+        case 0x49: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.C & (1 << 1))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 1,D
+        case 0x4A: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.D & (1 << 1))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 1,E
+        case 0x4B: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.E & (1 << 1))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 1,H
+        case 0x4C: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.H & (1 << 1))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 1,L
+        case 0x4D: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.L & (1 << 1))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 1,(HL)
+        case 0x4E: {
+            uint8_t value = memory.read(unsigned_16(regs.H, regs.L));
+
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(value & (1 << 1))) regs.F |= 0x80;
+
+            return 8;
+        }
+
+        // BIT 1,A
+        case 0x4F: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.A & (1 << 1))) regs.F |= 0x80;
+            return 4;
+        }
+        // BIT 2,B
+        case 0x50: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.B & (1 << 2))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 2,C
+        case 0x51: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.C & (1 << 2))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 2,D
+        case 0x52: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.D & (1 << 2))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 2,E
+        case 0x53: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.E & (1 << 2))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 2,H
+        case 0x54: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.H & (1 << 2))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 2,L
+        case 0x55: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.L & (1 << 2))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 2,(HL)
+        case 0x56: {
+            uint8_t value = memory.read(unsigned_16(regs.H, regs.L));
+
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(value & (1 << 2))) regs.F |= 0x80;
+
+            return 8;
+        }
+
+        // BIT 2,A
+        case 0x57: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.A & (1 << 2))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 3,B
+        case 0x58: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.B & (1 << 3))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 3,C
+        case 0x59: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.C & (1 << 3))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 3,D
+        case 0x5A: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.D & (1 << 3))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 3,E
+        case 0x5B: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.E & (1 << 3))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 3,H
+        case 0x5C: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.H & (1 << 3))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 3,L
+        case 0x5D: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.L & (1 << 3))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 3,(HL)
+        case 0x5E: {
+            uint8_t value = memory.read(unsigned_16(regs.H, regs.L));
+
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(value & (1 << 3))) regs.F |= 0x80;
+
+            return 8;
+        }
+
+        // BIT 3,A
+        case 0x5F: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.A & (1 << 3))) regs.F |= 0x80;
+            return 4;
+        }
+        // BIT 4,B
+        case 0x60: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.B & (1 << 4))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 4,C
+        case 0x61: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.C & (1 << 4))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 4,D
+        case 0x62: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.D & (1 << 4))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 4,E
+        case 0x63: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.E & (1 << 4))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 4,H
+        case 0x64: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.H & (1 << 4))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 4,L
+        case 0x65: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.L & (1 << 4))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 4,(HL)
+        case 0x66: {
+            uint8_t value = memory.read(unsigned_16(regs.H, regs.L));
+
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(value & (1 << 4))) regs.F |= 0x80;
+
+            return 8;
+        }
+
+        // BIT 4,A
+        case 0x67: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.A & (1 << 4))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 5,B
+        case 0x68: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.B & (1 << 5))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 5,C
+        case 0x69: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.C & (1 << 5))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 5,D
+        case 0x6A: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.D & (1 << 5))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 5,E
+        case 0x6B: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.E & (1 << 5))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 5,H
+        case 0x6C: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.H & (1 << 5))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 5,L
+        case 0x6D: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.L & (1 << 5))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 5,(HL)
+        case 0x6E: {
+            uint8_t value = memory.read(unsigned_16(regs.H, regs.L));
+
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(value & (1 << 5))) regs.F |= 0x80;
+
+            return 8;
+        }
+
+        // BIT 5,A
+        case 0x6F: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.A & (1 << 5))) regs.F |= 0x80;
+            return 4;
+        }
+        // BIT 6,B
+        case 0x70: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.B & (1 << 6))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 6,C
+        case 0x71: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.C & (1 << 6))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 6,D
+        case 0x72: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.D & (1 << 6))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 6,E
+        case 0x73: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.E & (1 << 6))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 6,H
+        case 0x74: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.H & (1 << 6))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 6,L
+        case 0x75: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.L & (1 << 6))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 6,(HL)
+        case 0x76: {
+            uint8_t value = memory.read(unsigned_16(regs.H, regs.L));
+
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(value & (1 << 6))) regs.F |= 0x80;
+
+            return 8;
+        }
+
+        // BIT 6,A
+        case 0x77: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.A & (1 << 6))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 7,B
+        case 0x78: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.B & (1 << 7))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 7,C
+        case 0x79: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.C & (1 << 7))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 7,D
+        case 0x7A: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.D & (1 << 7))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 7,E
+        case 0x7B: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.E & (1 << 7))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 7,H
+        case 0x7C: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.H & (1 << 7))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 7,L
+        case 0x7D: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.L & (1 << 7))) regs.F |= 0x80;
+            return 4;
+        }
+
+        // BIT 7,(HL)
+        case 0x7E: {
+            uint8_t value = memory.read(unsigned_16(regs.H, regs.L));
+
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(value & (1 << 7))) regs.F |= 0x80;
+
+            return 8;
+        }
+
+        // BIT 7,A
+        case 0x7F: {
+            regs.F = (regs.F & 0x10) | 0x20;
+            if (!(regs.A & (1 << 7))) regs.F |= 0x80;
+            return 4;
+        }
+        // RES 0,B
+        case 0x80: {
+            regs.B &= ~(1 << 0);
+            return 4;
+        }
+
+        // RES 0,C
+        case 0x81: {
+            regs.C &= ~(1 << 0);
+            return 4;
+        }
+
+        // RES 0,D
+        case 0x82: {
+            regs.D &= ~(1 << 0);
+            return 4;
+        }
+
+        // RES 0,E
+        case 0x83: {
+            regs.E &= ~(1 << 0);
+            return 4;
+        }
+
+        // RES 0,H
+        case 0x84: {
+            regs.H &= ~(1 << 0);
+            return 4;
+        }
+
+        // RES 0,L
+        case 0x85: {
+            regs.L &= ~(1 << 0);
+            return 4;
+        }
+
+        // RES 0,(HL)
+        case 0x86: {
+            uint16_t addr = unsigned_16(regs.H, regs.L);
+            uint8_t value = memory.read(addr);
+            value &= ~(1 << 0);
+            memory.write(addr, value);
+            return 12;
+        }
+
+        // RES 0,A
+        case 0x87: {
+            regs.A &= ~(1 << 0);
+            return 4;
+        }
+
+        // RES 1,B
+        case 0x88: {
+            regs.B &= ~(1 << 1);
+            return 4;
+        }
+
+        // RES 1,C
+        case 0x89: {
+            regs.C &= ~(1 << 1);
+            return 4;
+        }
+
+        // RES 1,D
+        case 0x8A: {
+            regs.D &= ~(1 << 1);
+            return 4;
+        }
+
+        // RES 1,E
+        case 0x8B: {
+            regs.E &= ~(1 << 1);
+            return 4;
+        }
+
+        // RES 1,H
+        case 0x8C: {
+            regs.H &= ~(1 << 1);
+            return 4;
+        }
+
+        // RES 1,L
+        case 0x8D: {
+            regs.L &= ~(1 << 1);
+            return 4;
+        }
+
+        // RES 1,(HL)
+        case 0x8E: {
+            uint16_t addr = unsigned_16(regs.H, regs.L);
+            uint8_t value = memory.read(addr);
+            value &= ~(1 << 1);
+            memory.write(addr, value);
+            return 12;
+        }
+
+        // RES 1,A
+        case 0x8F: {
+            regs.A &= ~(1 << 1);
+            return 4;
+        }
+        // RES 2,B
+        case 0x90: {
+            regs.B &= ~(1 << 2);
+            return 4;
+        }
+
+        // RES 2,C
+        case 0x91: {
+            regs.C &= ~(1 << 2);
+            return 4;
+        }
+
+        // RES 2,D
+        case 0x92: {
+            regs.D &= ~(1 << 2);
+            return 4;
+        }
+
+        // RES 2,E
+        case 0x93: {
+            regs.E &= ~(1 << 2);
+            return 4;
+        }
+
+        // RES 2,H
+        case 0x94: {
+            regs.H &= ~(1 << 2);
+            return 4;
+        }
+
+        // RES 2,L
+        case 0x95: {
+            regs.L &= ~(1 << 2);
+            return 4;
+        }
+
+        // RES 2,(HL)
+        case 0x96: {
+            uint16_t addr = unsigned_16(regs.H, regs.L);
+            uint8_t value = memory.read(addr);
+            value &= ~(1 << 2);
+            memory.write(addr, value);
+            return 12;
+        }
+
+        // RES 2,A
+        case 0x97: {
+            regs.A &= ~(1 << 2);
+            return 4;
+        }
+
+        // RES 3,B
+        case 0x98: {
+            regs.B &= ~(1 << 3);
+            return 4;
+        }
+
+        // RES 3,C
+        case 0x99: {
+            regs.C &= ~(1 << 3);
+            return 4;
+        }
+
+        // RES 3,D
+        case 0x9A: {
+            regs.D &= ~(1 << 3);
+            return 4;
+        }
+
+        // RES 3,E
+        case 0x9B: {
+            regs.E &= ~(1 << 3);
+            return 4;
+        }
+
+        // RES 3,H
+        case 0x9C: {
+            regs.H &= ~(1 << 3);
+            return 4;
+        }
+
+        // RES 3,L
+        case 0x9D: {
+            regs.L &= ~(1 << 3);
+            return 4;
+        }
+
+        // RES 3,(HL)
+        case 0x9E: {
+            uint16_t addr = unsigned_16(regs.H, regs.L);
+            uint8_t value = memory.read(addr);
+            value &= ~(1 << 3);
+            memory.write(addr, value);
+            return 12;
+        }
+
+        // RES 3,A
+        case 0x9F: {
+            regs.A &= ~(1 << 3);
+            return 4;
+        }
+        // RES 4,B
+        case 0xA0: {
+            regs.B &= ~(1 << 4);
+            return 4;
+        }
+
+        // RES 4,C
+        case 0xA1: {
+            regs.C &= ~(1 << 4);
+            return 4;
+        }
+
+        // RES 4,D
+        case 0xA2: {
+            regs.D &= ~(1 << 4);
+            return 4;
+        }
+
+        // RES 4,E
+        case 0xA3: {
+            regs.E &= ~(1 << 4);
+            return 4;
+        }
+
+        // RES 4,H
+        case 0xA4: {
+            regs.H &= ~(1 << 4);
+            return 4;
+        }
+
+        // RES 4,L
+        case 0xA5: {
+            regs.L &= ~(1 << 4);
+            return 4;
+        }
+
+        // RES 4,(HL)
+        case 0xA6: {
+            uint16_t addr = unsigned_16(regs.H, regs.L);
+            uint8_t value = memory.read(addr);
+            value &= ~(1 << 4);
+            memory.write(addr, value);
+            return 12;
+        }
+
+        // RES 4,A
+        case 0xA7: {
+            regs.A &= ~(1 << 4);
+            return 4;
+        }
+
+        // RES 5,B
+        case 0xA8: {
+            regs.B &= ~(1 << 5);
+            return 4;
+        }
+
+        // RES 5,C
+        case 0xA9: {
+            regs.C &= ~(1 << 5);
+            return 4;
+        }
+
+        // RES 5,D
+        case 0xAA: {
+            regs.D &= ~(1 << 5);
+            return 4;
+        }
+
+        // RES 5,E
+        case 0xAB: {
+            regs.E &= ~(1 << 5);
+            return 4;
+        }
+
+        // RES 5,H
+        case 0xAC: {
+            regs.H &= ~(1 << 5);
+            return 4;
+        }
+
+        // RES 5,L
+        case 0xAD: {
+            regs.L &= ~(1 << 5);
+            return 4;
+        }
+
+        // RES 5,(HL)
+        case 0xAE: {
+            uint16_t addr = unsigned_16(regs.H, regs.L);
+            uint8_t value = memory.read(addr);
+            value &= ~(1 << 5);
+            memory.write(addr, value);
+            return 12;
+        }
+
+        // RES 5,A
+        case 0xAF: {
+            regs.A &= ~(1 << 5);
+            return 4;
+        }
+        // RES 6,B
+        case 0xB0: {
+            regs.B &= ~(1 << 6);
+            return 4;
+        }
+
+        // RES 6,C
+        case 0xB1: {
+            regs.C &= ~(1 << 6);
+            return 4;
+        }
+
+        // RES 6,D
+        case 0xB2: {
+            regs.D &= ~(1 << 6);
+            return 4;
+        }
+
+        // RES 6,E
+        case 0xB3: {
+            regs.E &= ~(1 << 6);
+            return 4;
+        }
+
+        // RES 6,H
+        case 0xB4: {
+            regs.H &= ~(1 << 6);
+            return 4;
+        }
+
+        // RES 6,L
+        case 0xB5: {
+            regs.L &= ~(1 << 6);
+            return 4;
+        }
+
+        // RES 6,(HL)
+        case 0xB6: {
+            uint16_t addr = unsigned_16(regs.H, regs.L);
+            uint8_t value = memory.read(addr);
+            value &= ~(1 << 6);
+            memory.write(addr, value);
+            return 12;
+        }
+
+        // RES 6,A
+        case 0xB7: {
+            regs.A &= ~(1 << 6);
+            return 4;
+        }
+
+        // RES 7,B
+        case 0xB8: {
+            regs.B &= ~(1 << 7);
+            return 4;
+        }
+
+        // RES 7,C
+        case 0xB9: {
+            regs.C &= ~(1 << 7);
+            return 4;
+        }
+
+        // RES 7,D
+        case 0xBA: {
+            regs.D &= ~(1 << 7);
+            return 4;
+        }
+
+        // RES 7,E
+        case 0xBB: {
+            regs.E &= ~(1 << 7);
+            return 4;
+        }
+
+        // RES 7,H
+        case 0xBC: {
+            regs.H &= ~(1 << 7);
+            return 4;
+        }
+
+        // RES 7,L
+        case 0xBD: {
+            regs.L &= ~(1 << 7);
+            return 4;
+        }
+
+        // RES 7,(HL)
+        case 0xBE: {
+            uint16_t addr = unsigned_16(regs.H, regs.L);
+            uint8_t value = memory.read(addr);
+            value &= ~(1 << 7);
+            memory.write(addr, value);
+            return 12;
+        }
+
+        // RES 7,A
+        case 0xBF: {
+            regs.A &= ~(1 << 7);
+            return 4;
+        }
+        // SET 0,B
+        case 0xC0: {
+            regs.B |= (1 << 0);
+            return 4;
+        }
+
+        // SET 0,C
+        case 0xC1: {
+            regs.C |= (1 << 0);
+            return 4;
+        }
+
+        // SET 0,D
+        case 0xC2: {
+            regs.D |= (1 << 0);
+            return 4;
+        }
+
+        // SET 0,E
+        case 0xC3: {
+            regs.E |= (1 << 0);
+            return 4;
+        }
+
+        // SET 0,H
+        case 0xC4: {
+            regs.H |= (1 << 0);
+            return 4;
+        }
+
+        // SET 0,L
+        case 0xC5: {
+            regs.L |= (1 << 0);
+            return 4;
+        }
+
+        // SET 0,(HL)
+        case 0xC6: {
+            uint16_t addr = unsigned_16(regs.H, regs.L);
+            uint8_t value = memory.read(addr);
+            value |= (1 << 0);
+            memory.write(addr, value);
+            return 12;
+        }
+
+        // SET 0,A
+        case 0xC7: {
+            regs.A |= (1 << 0);
+            return 4;
+        }
+
+        // SET 1,B
+        case 0xC8: {
+            regs.B |= (1 << 1);
+            return 4;
+        }
+
+        // SET 1,C
+        case 0xC9: {
+            regs.C |= (1 << 1);
+            return 4;
+        }
+
+        // SET 1,D
+        case 0xCA: {
+            regs.D |= (1 << 1);
+            return 4;
+        }
+
+        // SET 1,E
+        case 0xCB: {
+            regs.E |= (1 << 1);
+            return 4;
+        }
+
+        // SET 1,H
+        case 0xCC: {
+            regs.H |= (1 << 1);
+            return 4;
+        }
+
+        // SET 1,L
+        case 0xCD: {
+            regs.L |= (1 << 1);
+            return 4;
+        }
+
+        // SET 1,(HL)
+        case 0xCE: {
+            uint16_t addr = unsigned_16(regs.H, regs.L);
+            uint8_t value = memory.read(addr);
+            value |= (1 << 1);
+            memory.write(addr, value);
+            return 12;
+        }
+
+        // SET 1,A
+        case 0xCF: {
+            regs.A |= (1 << 1);
+            return 4;
+        }
+        // SET 2,B
+        case 0xD0: {
+            regs.B |= (1 << 2);
+            return 4;
+        }
+
+        // SET 2,C
+        case 0xD1: {
+            regs.C |= (1 << 2);
+            return 4;
+        }
+
+        // SET 2,D
+        case 0xD2: {
+            regs.D |= (1 << 2);
+            return 4;
+        }
+
+        // SET 2,E
+        case 0xD3: {
+            regs.E |= (1 << 2);
+            return 4;
+        }
+
+        // SET 2,H
+        case 0xD4: {
+            regs.H |= (1 << 2);
+            return 4;
+        }
+
+        // SET 2,L
+        case 0xD5: {
+            regs.L |= (1 << 2);
+            return 4;
+        }
+
+        // SET 2,(HL)
+        case 0xD6: {
+            uint16_t addr = unsigned_16(regs.H, regs.L);
+            uint8_t value = memory.read(addr);
+            value |= (1 << 2);
+            memory.write(addr, value);
+            return 12;
+        }
+
+        // SET 2,A
+        case 0xD7: {
+            regs.A |= (1 << 2);
+            return 4;
+        }
+
+        // SET 3,B
+        case 0xD8: {
+            regs.B |= (1 << 3);
+            return 4;
+        }
+
+        // SET 3,C
+        case 0xD9: {
+            regs.C |= (1 << 3);
+            return 4;
+        }
+
+        // SET 3,D
+        case 0xDA: {
+            regs.D |= (1 << 3);
+            return 4;
+        }
+
+        // SET 3,E
+        case 0xDB: {
+            regs.E |= (1 << 3);
+            return 4;
+        }
+
+        // SET 3,H
+        case 0xDC: {
+            regs.H |= (1 << 3);
+            return 4;
+        }
+
+        // SET 3,L
+        case 0xDD: {
+            regs.L |= (1 << 3);
+            return 4;
+        }
+
+        // SET 3,(HL)
+        case 0xDE: {
+            uint16_t addr = unsigned_16(regs.H, regs.L);
+            uint8_t value = memory.read(addr);
+            value |= (1 << 3);
+            memory.write(addr, value);
+            return 12;
+        }
+
+        // SET 3,A
+        case 0xDF: {
+            regs.A |= (1 << 3);
+            return 4;
+        }
+        // SET 4,B
+        case 0xE0: {
+            regs.B |= (1 << 4);
+            return 4;
+        }
+
+        // SET 4,C
+        case 0xE1: {
+            regs.C |= (1 << 4);
+            return 4;
+        }
+
+        // SET 4,D
+        case 0xE2: {
+            regs.D |= (1 << 4);
+            return 4;
+        }
+
+        // SET 4,E
+        case 0xE3: {
+            regs.E |= (1 << 4);
+            return 4;
+        }
+
+        // SET 4,H
+        case 0xE4: {
+            regs.H |= (1 << 4);
+            return 4;
+        }
+
+        // SET 4,L
+        case 0xE5: {
+            regs.L |= (1 << 4);
+            return 4;
+        }
+
+        // SET 4,(HL)
+        case 0xE6: {
+            uint16_t addr = unsigned_16(regs.H, regs.L);
+            uint8_t value = memory.read(addr);
+            value |= (1 << 4);
+            memory.write(addr, value);
+            return 12;
+        }
+
+        // SET 4,A
+        case 0xE7: {
+            regs.A |= (1 << 4);
+            return 4;
+        }
+
+        // SET 5,B
+        case 0xE8: {
+            regs.B |= (1 << 5);
+            return 4;
+        }
+
+        // SET 5,C
+        case 0xE9: {
+            regs.C |= (1 << 5);
+            return 4;
+        }
+
+        // SET 5,D
+        case 0xEA: {
+            regs.D |= (1 << 5);
+            return 4;
+        }
+
+        // SET 5,E
+        case 0xEB: {
+            regs.E |= (1 << 5);
+            return 4;
+        }
+
+        // SET 5,H
+        case 0xEC: {
+            regs.H |= (1 << 5);
+            return 4;
+        }
+
+        // SET 5,L
+        case 0xED: {
+            regs.L |= (1 << 5);
+            return 4;
+        }
+
+        // SET 5,(HL)
+        case 0xEE: {
+            uint16_t addr = unsigned_16(regs.H, regs.L);
+            uint8_t value = memory.read(addr);
+            value |= (1 << 5);
+            memory.write(addr, value);
+            return 12;
+        }
+
+        // SET 5,A
+        case 0xEF: {
+            regs.A |= (1 << 5);
+            return 4;
+        }
+        // SET 6,B
+        case 0xF0: {
+            regs.B |= (1 << 6);
+            return 4;
+        }
+
+        // SET 6,C
+        case 0xF1: {
+            regs.C |= (1 << 6);
+            return 4;
+        }
+
+        // SET 6,D
+        case 0xF2: {
+            regs.D |= (1 << 6);
+            return 4;
+        }
+
+        // SET 6,E
+        case 0xF3: {
+            regs.E |= (1 << 6);
+            return 4;
+        }
+
+        // SET 6,H
+        case 0xF4: {
+            regs.H |= (1 << 6);
+            return 4;
+        }
+
+        // SET 6,L
+        case 0xF5: {
+            regs.L |= (1 << 6);
+            return 4;
+        }
+
+        // SET 6,(HL)
+        case 0xF6: {
+            uint16_t addr = unsigned_16(regs.H, regs.L);
+            uint8_t value = memory.read(addr);
+            value |= (1 << 6);
+            memory.write(addr, value);
+            return 12;
+        }
+
+        // SET 6,A
+        case 0xF7: {
+            regs.A |= (1 << 6);
+            return 4;
+        }
+
+        // SET 7,B
+        case 0xF8: {
+            regs.B |= (1 << 7);
+            return 4;
+        }
+
+        // SET 7,C
+        case 0xF9: {
+            regs.C |= (1 << 7);
+            return 4;
+        }
+
+        // SET 7,D
+        case 0xFA: {
+            regs.D |= (1 << 7);
+            return 4;
+        }
+
+        // SET 7,E
+        case 0xFB: {
+            regs.E |= (1 << 7);
+            return 4;
+        }
+
+        // SET 7,H
+        case 0xFC: {
+            regs.H |= (1 << 7);
+            return 4;
+        }
+
+        // SET 7,L
+        case 0xFD: {
+            regs.L |= (1 << 7);
+            return 4;
+        }
+
+        // SET 7,(HL)
+        case 0xFE: {
+            uint16_t addr = unsigned_16(regs.H, regs.L);
+            uint8_t value = memory.read(addr);
+            value |= (1 << 7);
+            memory.write(addr, value);
+            return 12;
+        }
+
+        // SET 7,A
+        case 0xFF: {
+            regs.A |= (1 << 7);
+            return 4;
+        }
+    }
+}
+
 uint16_t CPU::unsigned_16(uint8_t r1, uint8_t r2) {
     // Type cast to (uint16_t) since the << operator turns the value to a regular integer
     return ((uint16_t)r1 << 8 | r2);
