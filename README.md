@@ -24,4 +24,6 @@ make
 ## Resources
 - [SM86 Instruction Set](https://gbdev.io/gb-opcodes/optables/)
 - [Game Boy: Complete Technical Reference](https://gekkio.fi/files/gb-docs/gbctr.pdf)
+- [The Game Boy, a hardware autopsy - Part 1: the CPU](https://www.youtube.com/watch?v=RZUDEaLa5Nw)
+- [The Game Boy, a hardware autopsy - Part 2: memory mapping](https://www.youtube.com/watch?v=ecTQVa42sJc)
 
