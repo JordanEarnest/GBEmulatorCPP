@@ -4,6 +4,8 @@
 */
 #pragma once
 #include <stdint.h>
+#include <iostream>
+#include <iomanip>
 #include "memory.h"
 
 // Registers for the Sharp SM83 CPU core
@@ -14,8 +16,6 @@ struct Registers {
     uint8_t B, C;
     uint8_t D, E;
     uint8_t H, L;
-    // IR = Instruction Register, IE = Interrupt Enable
-    uint8_t IR, IE;
     // PC = Program Counter, SP = Stack Pointer
     uint16_t PC, SP;
 };
@@ -46,6 +46,8 @@ public:
     int execute(uint8_t opcode);
     // Execute unique unprefixed opcodes, returns number of cycles executing opcode requires
     int executePrefixed(uint8_t opcode);
+
+    int handleInterrupts();
 
 private:
     // Helper methods to get 16 bit register pairs

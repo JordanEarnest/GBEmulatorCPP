@@ -27,7 +27,7 @@ bool Cartridge::loadROM(const std::string& path) {
     setBankSizes();
     allocateRAM();
     initializeHardware();
-    print();
+    //print();
 
     return true;
 }

@@ -14,8 +14,6 @@ CPU::CPU(Memory& mem) : memory(mem) {
     regs.H = 0x01;
     regs.L = 0x4D;
 
-    regs.IE = 0x00;
-
     // SP starts at 0xFFFE
     regs.SP = 0xFFFE;
     // PC starts at 0x0100 for actual game code, everything before is boot ROM data
@@ -23,6 +21,8 @@ CPU::CPU(Memory& mem) : memory(mem) {
 
     // Determines if CPU is in a STOPPED state (low power mode for saving)
     stopped = false;
+    // Interrupt Master Enable Flag
+    ime = false;
 };
 
 int CPU::step() {
@@ -32,7 +32,14 @@ int CPU::step() {
     // Run opcode and return number of cycles taken
     int cycles = execute(opcode);
 
-    printf("%02X\n", opcode);
+    std::cout << "Executed: 0x"
+          << std::setw(2) << std::setfill('0') << std::hex << std::uppercase
+          << static_cast<int>(opcode)
+          << " at address: 0x"
+          << std::setw(4) << std::setfill('0') << regs.PC
+          << std::endl;
+
+    cycles += handleInterrupts();
 
     return cycles;
 }
@@ -5750,6 +5757,38 @@ int CPU::executePrefixed(uint8_t opcode) {
             return 4;
         }
     }
+}
+
+int CPU::handleInterrupts() {
+    int cycles = 0;
+    uint8_t IF = memory.read(0xFF0F);
+    uint8_t IE = memory.read(0xFFFF);
+
+    uint8_t pending = IE & IF;
+
+    if (!ime || !pending) return 0;
+
+    // Handle V Blank Interrupt
+    if (pending  & 0x01) {
+        IF &= ~0x01; // reset v blank flag back to 0
+        memory.write(--regs.SP, regs.PC >> 8);
+        memory.write(--regs.SP, regs.PC & 0xFF); // push current pc onto stack
+        regs.PC = 0x40; // Address for Interrupt Handler for VBLank
+        cycles += 20;
+    } 
+    // Handle STAT Interrupt
+    else if (pending  & 0x02) {
+        IF &= ~0x02; // reset STAT flag back to 0
+        memory.write(--regs.SP, regs.PC >> 8);
+        memory.write(--regs.SP, regs.PC & 0xFF); // push current pc onto stack
+        regs.PC = 0x48; // Address for Interrupt Handler for STAT
+        cycles += 20;
+    }
+
+    memory.write(0xFF0F, IF); // Write IF back to memory
+    ime = false;
+
+    return cycles;
 }
 
 uint16_t CPU::unsigned_16(uint8_t r1, uint8_t r2) {
