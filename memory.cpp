@@ -62,6 +62,7 @@ void Memory::write(uint16_t address, uint8_t value) {
     }
     // VRAM
     else if (address >= 0x8000 && address <= 0x9FFF) {
+
         vram[address - 0x8000] = value;
     }
     // WRAM

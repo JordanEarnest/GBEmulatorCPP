@@ -1,8 +1,20 @@
 #include "ppu.h"
+#include <iostream>
 
 
 PPU::PPU(Memory& mem) : memory(mem), spriteBuffer(10), spriteCount(0) {
+    initializeHardware();
+}
 
+void PPU::initializeHardware() {
+    // Assign default values
+    setLCDC(0x91);
+    setSCY(0x00);
+    setSCX(0x00);
+    setLY(0x00);
+    setLYC(0x00);
+    setBGP(0xFC);
+    setSTAT(0x85);
 }
 
 void PPU::step(int tCycles) {
@@ -17,6 +29,7 @@ void PPU::step(int tCycles) {
     cycleCounter += tCycles;
 
     uint8_t ly = getLY();
+    //std::cout << "LY: " << static_cast<int>(ly) << std::endl;
     uint8_t lyc = getLYC();
     uint8_t currentMode = getSTAT() & 0x03;
 
@@ -55,7 +68,7 @@ void PPU::step(int tCycles) {
         }
     } 
     // Mode 3 - Pixel Transfer (fill current scanline in framebuffer)
-    else if (cycleCounter < 252) {
+    else if (cycleCounter < 80+172) {
         // Set STAT register to mode 3
         if (currentMode != 3) {
             setPPUMode(3);
@@ -141,7 +154,6 @@ void PPU::step(int tCycles) {
         cycleCounter -= 456; // reset back to 0
 
         ly++;
-        setLY(ly);
 
         uint8_t stat = getSTAT();
 
@@ -162,12 +174,12 @@ void PPU::step(int tCycles) {
         if (ly == 144) { 
             setPPUMode(1); // VBlank
             requestVBlankInterrupt();
+            setFrameReady(true);
         }
 
         if (ly > 153) {
             ly = 0;
         }
-
         // Update LY register into memory
         setLY(ly);
     }
@@ -179,7 +191,34 @@ bool PPU::spriteIntersectsLY(uint8_t y) {
 
     uint8_t spriteHeight = (lcdc & 0x04) ? 16 : 8;
 
-    return (ly + 16 >= y) && (ly + 16 < y + spriteHeight);
+    return (ly >= y - 16) && (ly < y - 16 + spriteHeight);
+}
+
+uint8_t* PPU::getFrameBuffer() {
+    return &frameBuffer[0][0];
+}
+
+void PPU::render() {
+    char shade[4] = { ' ', '.', '*', '#' };
+
+    std::cout << "\033[H";   // move cursor to top
+
+    for (int i = 0; i < 144; i++) {
+        for (int j = 0; j < 160; j++) {
+            std::cout << shade[frameBuffer[i][j]];
+        }
+        std::cout << '\n';
+    }
+
+    std::cout.flush();
+}
+
+void PPU::setFrameReady(bool value) {
+    frameReady = value;
+}
+
+bool PPU::getFrameReady() {
+    return frameReady;
 }
 
 void PPU::requestVBlankInterrupt() {

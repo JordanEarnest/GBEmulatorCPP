@@ -22,6 +22,8 @@ private:
     std::vector<Sprite> spriteBuffer;
     int spriteCount;
 
+    bool frameReady;
+
     // Stores entire frame to be displayed on LCD screen when ready
     uint8_t frameBuffer[144][160] = {};
 
@@ -37,6 +39,7 @@ private:
     uint8_t getSCX(); // background scroll x
     uint8_t getBGP(); // background pallete
 
+
     // Setters for all PPU related registers
     void setLY(uint8_t value);
     void setLYC(uint8_t value);
@@ -45,6 +48,7 @@ private:
     void setSCY(uint8_t value); // background scroll y
     void setSCX(uint8_t value); // background scroll x
     void setBGP(uint8_t value); // background pallete
+
 
     // Set mode of PPU
     void setPPUMode(int value);
@@ -57,8 +61,20 @@ private:
     // Helper method to see if sprite intersects with LY
     bool spriteIntersectsLY(uint8_t y);
 
+    // intialize hardware
+    void initializeHardware();
+
+    // render to terminal
+    void render();
+
 public:
     PPU(Memory& memory);
+
+    bool getFrameReady();
+    void setFrameReady(bool value);
+
+    uint8_t* getFrameBuffer();
+    
 
     // Draw one frame
     // 1 T cycle = 1 PPU cycle

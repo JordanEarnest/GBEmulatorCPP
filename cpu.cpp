@@ -32,12 +32,12 @@ int CPU::step() {
     // Run opcode and return number of cycles taken
     int cycles = execute(opcode);
 
-    std::cout << "Executed: 0x"
-          << std::setw(2) << std::setfill('0') << std::hex << std::uppercase
-          << static_cast<int>(opcode)
-          << " at address: 0x"
-          << std::setw(4) << std::setfill('0') << regs.PC
-          << std::endl;
+    //std::cout << "Executed: 0x"
+       //   << std::setw(2) << std::setfill('0') << std::hex << std::uppercase
+      //    << static_cast<int>(opcode)
+      //    << " at address: 0x"
+     //     << std::setw(4) << std::setfill('0') << regs.PC
+      //    << std::endl;
 
     cycles += handleInterrupts();
 

@@ -1,6 +1,6 @@
 CXX = g++
-CXXFLAGS = -std=c++17 -g -O0 -Wall -Wextra -fsanitize=address
-LDFLAGS = -fsanitize=address
+CXXFLAGS = -std=c++17 -g -O0 -Wall -Wextra -fsanitize=address $(shell sdl2-config --cflags)
+LDFLAGS = -fsanitize=address $(shell sdl2-config --libs)
 
 SRC = main.cpp memory.cpp cartridge.cpp cpu.cpp ppu.cpp
 OBJ = $(SRC:.cpp=.o)
