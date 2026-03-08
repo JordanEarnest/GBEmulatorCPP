@@ -2,7 +2,7 @@ CXX = g++
 CXXFLAGS = -std=c++17 -g -O0 -Wall -Wextra -fsanitize=address
 LDFLAGS = -fsanitize=address
 
-SRC = main.cpp memory.cpp cartridge.cpp cpu.cpp
+SRC = main.cpp memory.cpp cartridge.cpp cpu.cpp ppu.cpp
 OBJ = $(SRC:.cpp=.o)
 TARGET = gbemu
 

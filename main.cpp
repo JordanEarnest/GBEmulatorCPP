@@ -1,6 +1,7 @@
 #include "cartridge.h"
 #include "memory.h"
 #include "cpu.h"
+#include "ppu.h"
 #include <iostream>
 
 int main() {
@@ -12,9 +13,9 @@ int main() {
     }
 
     CPU cpu(memory);
+    PPU ppu(memory);
 
-    for (int i = 0; i < 100; i++)
-         cpu.step();
+    cpu.step();
 
     return 0;
 }

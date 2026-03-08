@@ -4,3 +4,4 @@ gbemu
 main.o
 pokemon.gb
 memory.o
+ppu.o
