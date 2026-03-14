@@ -15,6 +15,8 @@ void PPU::initializeHardware() {
     setLYC(0x00);
     setBGP(0xFC);
     setSTAT(0x85);
+    setWX(0x00);
+    setWY(0x00);
 }
 
 void PPU::step(int tCycles) {
@@ -55,6 +57,7 @@ void PPU::step(int tCycles) {
                 uint8_t x = memory.read(addr + 1);
                 uint8_t tile = memory.read(addr + 2);
                 uint8_t attr = memory.read(addr + 3);
+
                 
                 // Check if current sprite intersects scanline
                 if (spriteIntersectsLY(y)) { 
@@ -77,6 +80,11 @@ void PPU::step(int tCycles) {
             uint8_t scy = getSCY();
             uint8_t bgp = getBGP();
             uint8_t lcdc = getLCDC();
+            uint8_t wx = getWX();
+            uint8_t wy = getWY();
+
+            bool windowEnabled = lcdc & 0x20;
+            int windowStartX = (int)wx - 7;
 
             // Compute all 160 pixels for scanline
             for (int x = 0; x < 160; x++) {
@@ -86,58 +94,16 @@ void PPU::step(int tCycles) {
                     continue;
                 }
                 
-                // calculate background pos considering scroll
-                uint8_t bgX = (x + scx) & 255; // "& 255" technically not needed since uint8_t auto wraps with overflow, but shows intention
-                uint8_t bgY = (ly + scy) & 255;
+                bool usingWindow = windowEnabled && ly >= wy && x >= windowStartX;
 
-                uint8_t tileX = bgX / 8;
-                uint8_t tileY = bgY / 8;
-
-                uint16_t tileMapBase;
-                // which map to use? 0 or 1 in vram? lcdc bit 3 determines this
-                if (!(lcdc & 0x08)) 
-                    tileMapBase = 0x9800; // start of map 0
-                else 
-                    tileMapBase = 0x9C00; // start of map 1
-
-                // get memory location of the tile being looked for later vram read
-                uint16_t tileIndexAddress = tileMapBase + tileY * 32 + tileX;
-                // get what type of tile it is 
-                uint8_t tileIndex = memory.read(tileIndexAddress);
-
-                // what pixel are we actually looking for within the tile
-                uint8_t tilePixelX = bgX & 7;
-                uint8_t tilePixelY = bgY & 7;
-
-                
-                uint16_t tileDataAddress;
-                // Which partition to use in vram for tile data? signed or unsigned mode?
-                // lddc determines whether we use signedIndex or not and changes tileDataAddress
-                if (lcdc & 0x10) {
-                    tileDataAddress = 0x8000 + tileIndex * 16;
-                } else {
-                    int8_t signedIndex = (int8_t)tileIndex;
-                    tileDataAddress = 0x9000 + signedIndex * 16;
-                }
-
-                // Which row are we in within the tile data structure
-                uint16_t row = tilePixelY * 2;
-
-                uint8_t lowBits = memory.read(tileDataAddress + row);
-                uint8_t highBits = memory.read(tileDataAddress + (row + 1));
-
-                uint8_t bit = 7 - tilePixelX;
-
-                uint8_t lowBit  = (lowBits  >> bit) & 1;
-                uint8_t highBit = (highBits >> bit) & 1;
-
-                uint8_t pixelColor = (highBit << 1) | lowBit;
-
-
-                uint8_t shade = (bgp >> (pixelColor * 2)) & 0x03;
-
-                frameBuffer[ly][x] = shade;
+                // Background and Window -- HIGH PRIORITY
+                if (!usingWindow)
+                    fillScanLineWithBackground(x, scx, scy, ly, lcdc, bgp);
+                else
+                    fillScanLineWithWindow(x,  wx, wy, ly, lcdc, bgp);
             }
+            // Sprites -- MEDIUM PRIORITY
+            fillScanLineWithSpritesFromBuffer(ly, lcdc);
 
         }   
     } 
@@ -185,13 +151,193 @@ void PPU::step(int tCycles) {
     }
 }
 
+void PPU::fillScanLineWithBackground(uint8_t x, uint8_t scx, uint8_t scy, uint8_t ly, uint8_t lcdc, uint8_t bgp) {
+    // calculate background pos considering scroll
+    uint8_t bgX = (x + scx) & 255; // "& 255" technically not needed since uint8_t auto wraps with overflow, but shows intention
+    uint8_t bgY = (ly + scy) & 255;
+
+    uint8_t tileX = bgX / 8;
+    uint8_t tileY = bgY / 8;
+
+    uint16_t tileMapBase;
+    // which map to use? 0 or 1 in vram? lcdc bit 3 (background) determines this and lcdc bit 6 (window) determines this
+    if (!(lcdc & 0x08)) 
+        tileMapBase = 0x9800; // start of map 0
+    else 
+        tileMapBase = 0x9C00; // start of map 1
+
+    // get memory location of the tile being looked for later vram read
+    uint16_t tileIndexAddress = tileMapBase + tileY * 32 + tileX;
+    // get what type of tile it is 
+    uint8_t tileIndex = memory.read(tileIndexAddress);
+
+    // what pixel are we actually looking for within the tile
+    uint8_t tilePixelX = bgX & 7;
+    uint8_t tilePixelY = bgY & 7;
+
+    
+    uint16_t tileDataAddress;
+    // Which partition to use in vram for tile data? signed or unsigned mode?
+    // lddc determines whether we use signedIndex or not and changes tileDataAddress
+    if (lcdc & 0x10) {
+        tileDataAddress = 0x8000 + tileIndex * 16;
+    } else {
+        int8_t signedIndex = (int8_t)tileIndex;
+        tileDataAddress = 0x9000 + signedIndex * 16;
+    }
+
+    // Which row are we in within the tile data structure
+    uint16_t row = tilePixelY * 2;
+
+    uint8_t lowBits = memory.read(tileDataAddress + row);
+    uint8_t highBits = memory.read(tileDataAddress + (row + 1));
+
+    uint8_t bit = 7 - tilePixelX;
+
+    uint8_t lowBit  = (lowBits  >> bit) & 1;
+    uint8_t highBit = (highBits >> bit) & 1;
+
+    uint8_t pixelColor = (highBit << 1) | lowBit;
+
+
+    uint8_t shade = (bgp >> (pixelColor * 2)) & 0x03;
+
+    frameBuffer[ly][x] = shade;
+}
+
+void PPU::fillScanLineWithWindow(uint8_t x, uint8_t wx, uint8_t wy, uint8_t ly, uint8_t lcdc, uint8_t bgp) {
+    // calculate window pos 
+    int winX = x - (wx-7); // "& 255" technically not needed since uint8_t auto wraps with overflow, but shows intention
+    int winY = ly - wy;
+
+    uint8_t tileX = winX / 8;
+    uint8_t tileY = winY / 8;
+
+    uint16_t tileMapBase;
+    // which map to use? 0 or 1 in vram? lcdc bit 3 (background) determines this and lcdc bit 6 (window) determines this
+    if (lcdc & 0x40) 
+        tileMapBase = 0x9C00;
+    else 
+        tileMapBase = 0x9800;
+
+    // get memory location of the tile being looked for later vram read
+    uint16_t tileIndexAddress = tileMapBase + tileY * 32 + tileX;
+    // get what type of tile it is 
+    uint8_t tileIndex = memory.read(tileIndexAddress);
+
+    // what pixel are we actually looking for within the tile
+    uint8_t tilePixelX = winX & 7;
+    uint8_t tilePixelY = winY & 7;
+
+    uint16_t tileDataAddress;
+    // Which partition to use in vram for tile data? signed or unsigned mode?
+    // lddc determines whether we use signedIndex or not and changes tileDataAddress
+    if (lcdc & 0x10) {
+        tileDataAddress = 0x8000 + tileIndex * 16;
+    } else {
+        int8_t signedIndex = (int8_t)tileIndex;
+        tileDataAddress = 0x9000 + signedIndex * 16;
+    }
+
+    // Which row are we in within the tile data structure
+    uint16_t row = tilePixelY * 2;
+
+    uint8_t lowBits = memory.read(tileDataAddress + row);
+    uint8_t highBits = memory.read(tileDataAddress + (row + 1));
+
+    uint8_t bit = 7 - tilePixelX;
+
+    uint8_t lowBit  = (lowBits  >> bit) & 1;
+    uint8_t highBit = (highBits >> bit) & 1;
+
+    uint8_t pixelColor = (highBit << 1) | lowBit;
+
+
+    uint8_t shade = (bgp >> (pixelColor * 2)) & 0x03;
+
+    frameBuffer[ly][x] = shade;
+}
+
+void PPU::fillScanLineWithSpritesFromBuffer(uint8_t ly, uint8_t lcdc) {
+    // Sprite only renders if this is set in lcdc
+    if (!(lcdc & 0x02))
+        return;
+
+    for (int i = spriteCount - 1; i >=0; i--) {
+        Sprite& sprite = spriteBuffer[i];
+
+        int spriteHeight = (lcdc & 0x04) ? 16 : 8;
+
+        int x = sprite.x - 8;
+        int y = sprite.y - 16;
+
+        int row = ly - y;
+
+        if (row < 0 || row >= spriteHeight)
+            continue;
+
+        if (sprite.attr & 0x40)
+            row = spriteHeight - 1 - row;
+
+        uint8_t tileIndex = sprite.tile;
+        uint16_t tileAddress;
+
+        if (spriteHeight == 16) {
+            tileIndex &= 0xFE;
+            tileAddress = 0x8000 + (tileIndex + (row / 8)) * 16;
+            row %= 8;
+        } else {
+            tileAddress = 0x8000 + tileIndex * 16;
+        }
+
+        uint16_t rowAddress = tileAddress + row * 2;
+
+        uint8_t lowBits = memory.read(rowAddress);
+        uint8_t highBits = memory.read(rowAddress + 1);
+
+        for (int px = 0; px < 8; px++) {
+            int screenX = x + px;
+            
+            // If out of screen, don't bother rendering
+            if (screenX < 0 || screenX >= 160) {
+                continue;
+            }
+
+            // Handles X flip
+            uint8_t bit = (sprite.attr & 0x20) ? px : (7 - px);
+
+            uint8_t lowBit  = (lowBits >> bit) & 1;
+            uint8_t highBit = (highBits >> bit) & 1;
+            uint8_t color = (highBit << 1) | lowBit;
+ 
+            // don't draw transparent pixels
+            if (color == 0)
+                continue;
+
+            uint8_t palette = (sprite.attr & 0x10) ? getOBP1() : getOBP0();
+            uint8_t shade = (palette >> (color * 2)) & 3;
+
+            bool priority = sprite.attr & 0x80;
+
+            // Handle sprite/background priority
+            // bit7 -> BG Priority, if set sprite appears behind BG colors 1-3
+            if (priority && frameBuffer[ly][screenX] != 0)
+                continue;
+
+            frameBuffer[ly][screenX] = shade;
+        }
+    }
+}
+
 bool PPU::spriteIntersectsLY(uint8_t y) {
-    uint8_t lcdc = memory.read(0xFF40); // 0xFF40 location of LCDC register
+    uint8_t lcdc = memory.read(0xFF40);
     uint8_t ly = getLY();
 
-    uint8_t spriteHeight = (lcdc & 0x04) ? 16 : 8;
+    int spriteHeight = (lcdc & 0x04) ? 16 : 8;
 
-    return (ly >= y - 16) && (ly < y - 16 + spriteHeight);
+    int spriteY = (int)y - 16;
+
+    return (ly >= spriteY) && (ly < spriteY + spriteHeight);
 }
 
 uint8_t* PPU::getFrameBuffer() {
@@ -258,9 +404,22 @@ uint8_t PPU::getSCY() {
 uint8_t PPU::getSCX() {
     return memory.read(0xFF43);
 }
+uint8_t PPU::getWX() {
+    return memory.read(0xFF4B);
+}
+uint8_t PPU::getWY() {
+    return memory.read(0xFF4A);
+}
 uint8_t PPU::getBGP() {
     return memory.read(0xFF47);
 }
+uint8_t PPU::getOBP0() {
+    return memory.read(0xFF48);
+}
+uint8_t PPU::getOBP1() {
+    return memory.read(0xFF49);
+}
+
 
 // Setters for PPU registers
 void PPU::setLY(uint8_t value) {
@@ -281,8 +440,20 @@ void PPU::setSCY(uint8_t value) {
 void PPU::setSCX(uint8_t value) {
     memory.write(0xFF43,value);
 }
+void PPU::setWX(uint8_t value) {
+    memory.write(0xFF4B,value);
+}
+void PPU::setWY(uint8_t value) {
+    memory.write(0xFF4A,value);
+}
 void PPU::setBGP(uint8_t value) {
     memory.write(0xFF47, value);
+}
+void PPU::setOBP0(uint8_t value) {
+    memory.write(0xFF48,value);
+}
+void PPU::setOBP1(uint8_t value) {
+    memory.write(0xFF49, value);
 }
 
 

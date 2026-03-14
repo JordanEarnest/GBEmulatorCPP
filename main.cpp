@@ -2,6 +2,7 @@
 #include "memory.h"
 #include "cpu.h"
 #include "ppu.h"
+#include "joypad.h"
 #include <iostream>
 #include <SDL2/SDL.h>
 
@@ -41,13 +42,17 @@ int main() {
     0xFF000000  // black
     };
 
-    Memory memory;
+
+    Joypad joypad;
+    Memory memory(joypad);
+    joypad.connectToMemory(&memory);
 
     if (!memory.loadCartridge("pokemon.gb")) {
         std::cerr << "Failed to load cartridge" << std::endl;
         return -1;
     }
 
+    
     CPU cpu(memory);
     PPU ppu(memory);
 
@@ -60,6 +65,11 @@ int main() {
             if (e.type == SDL_QUIT)
                 running = false;
         }
+
+        const Uint8* state = SDL_GetKeyboardState(NULL);
+        
+        // Get keyboard data and store into joypad for reading
+        joypad.update(state);
 
         int cycles = cpu.step();
         ppu.step(cycles);

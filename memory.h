@@ -7,12 +7,15 @@
 
 #include "cartridge.h"
 #include <stdint.h>
-
+#include "joypad.h"
 class Memory {
 private:
     // ROM Data and External RAM
     Cartridge cartridge;         // 0x0000-0x7FFF  Total Bytes = 0x8000 (32KB)
-                                 // 0xA000-0xBFFF  Total Bytes = 0x2000 (8KB)
+                                  // 0xA000-0xBFFF  Total Bytes = 0x2000 (8KB)
+
+    // Reference to joy pad for specific read/write instructions
+    Joypad& joypad;
 
     // Video RAM 
     std::vector<uint8_t> vram;   // 0x8000–0x9FFF  Total Bytes = 0x2000 (8KB)
@@ -37,5 +40,5 @@ public:
     // Write a byte to memory at a 16bit addressable
     void write(uint16_t address, uint8_t value);
 
-    Memory();
+    Memory(Joypad& joypad);
 };

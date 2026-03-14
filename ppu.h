@@ -37,7 +37,11 @@ private:
     uint8_t getLCDC(); 
     uint8_t getSCY(); // background scroll y
     uint8_t getSCX(); // background scroll x
+    uint8_t getWX();
+    uint8_t getWY();
     uint8_t getBGP(); // background pallete
+    uint8_t getOBP0();
+    uint8_t getOBP1(); 
 
 
     // Setters for all PPU related registers
@@ -47,7 +51,11 @@ private:
     void setLCDC(uint8_t value);
     void setSCY(uint8_t value); // background scroll y
     void setSCX(uint8_t value); // background scroll x
+    void setWX(uint8_t value);
+    void setWY(uint8_t value);
     void setBGP(uint8_t value); // background pallete
+    void setOBP0(uint8_t value);
+    void setOBP1(uint8_t value); 
 
 
     // Set mode of PPU
@@ -63,6 +71,12 @@ private:
 
     // intialize hardware
     void initializeHardware();
+
+    void fillScanLineWithBackground(uint8_t x, uint8_t scx, uint8_t scy, uint8_t ly, uint8_t lcdc, uint8_t bgp);
+
+    void fillScanLineWithWindow(uint8_t x, uint8_t wx, uint8_t wy, uint8_t ly, uint8_t lcdc, uint8_t bgp);
+
+    void fillScanLineWithSpritesFromBuffer(uint8_t ly, uint8_t lcdc);
 
     // render to terminal
     void render();

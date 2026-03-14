@@ -32,13 +32,7 @@ int CPU::step() {
     // Run opcode and return number of cycles taken
     int cycles = execute(opcode);
 
-    //std::cout << "Executed: 0x"
-       //   << std::setw(2) << std::setfill('0') << std::hex << std::uppercase
-      //    << static_cast<int>(opcode)
-      //    << " at address: 0x"
-     //     << std::setw(4) << std::setfill('0') << regs.PC
-      //    << std::endl;
-
+    // Interrupts take a number of cycles so return, handle interrupts
     cycles += handleInterrupts();
 
     return cycles;
@@ -5782,6 +5776,14 @@ int CPU::handleInterrupts() {
         memory.write(--regs.SP, regs.PC >> 8);
         memory.write(--regs.SP, regs.PC & 0xFF); // push current pc onto stack
         regs.PC = 0x48; // Address for Interrupt Handler for STAT
+        cycles += 20;
+    }
+    // Handle JOYPAD Interrupt
+    else if (pending & 0x10) {
+        IF &= ~0x10;
+        memory.write(--regs.SP, regs.PC >> 8);
+        memory.write(--regs.SP, regs.PC & 0xFF); // push current pc onto stack
+        regs.PC = 0x60; // Address for Interrupt Handler for JOYPAD
         cycles += 20;
     }
 

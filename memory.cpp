@@ -34,6 +34,10 @@ uint8_t Memory::read(uint16_t address) {
     else if (address >= 0xFEA0 && address <= 0xFEFF) {
         return 0xFF; // safe default value
     }
+    // Joypad Register read at 0xFF00
+    else if (address == 0xFF00) {
+        return joypad.read();
+    }
     // I/O
     else if (address >= 0xFF00 && address <= 0xFF7F) {
         return io[address - 0xFF00];
@@ -73,6 +77,16 @@ void Memory::write(uint16_t address, uint8_t value) {
     else if (address >= 0xE000 && address <= 0xFDFF) {
         wram[address - 0x2000] = value;
     }
+    // DMA transfer
+    else if (address == 0xFF46) {
+        uint16_t source = value << 8;
+
+        for (int i = 0; i < 160; i++) {
+            oam[i] = read(source + i);
+        }
+
+        return;
+    }
     // OAM
     else if (address >= 0xFE00 && address <= 0xFE9F) {
         oam[address - 0xFE00] = value;
@@ -80,6 +94,10 @@ void Memory::write(uint16_t address, uint8_t value) {
     // Unused portion of memory
     else if (address >= 0xFEA0 && address <= 0xFEFF) {
         return; 
+    }
+    // Joypad Register Write
+    else if (address == 0xFF00) {
+        joypad.write(value); 
     }
     // I/O
     else if (address >= 0xFF00 && address <= 0xFF7F) {
@@ -98,7 +116,7 @@ void Memory::write(uint16_t address, uint8_t value) {
     }
 }
 
-Memory::Memory() {
+Memory::Memory(Joypad& joypad) : joypad(joypad) {
     // Initialize size of memory allocations
     vram.resize(0x2000);
     wram.resize(0x2000);
