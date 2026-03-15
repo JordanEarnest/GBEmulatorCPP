@@ -8,6 +8,10 @@
 #include "cartridge.h"
 #include <stdint.h>
 #include "joypad.h"
+#include "apu.h"
+
+class APU;
+
 class Memory {
 private:
     // ROM Data and External RAM
@@ -16,6 +20,8 @@ private:
 
     // Reference to joy pad for specific read/write instructions
     Joypad& joypad;
+    // Reference to APU for specific read/write instructions
+    APU& apu;
 
     // Video RAM 
     std::vector<uint8_t> vram;   // 0x8000–0x9FFF  Total Bytes = 0x2000 (8KB)
@@ -40,5 +46,5 @@ public:
     // Write a byte to memory at a 16bit addressable
     void write(uint16_t address, uint8_t value);
 
-    Memory(Joypad& joypad);
+    Memory(Joypad& joypad, APU& apu);
 };

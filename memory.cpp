@@ -38,6 +38,18 @@ uint8_t Memory::read(uint16_t address) {
     else if (address == 0xFF00) {
         return joypad.read();
     }
+    // APU special read from 0xFF15 always 0xFF
+    else if (address == 0xFF15) {
+        return 0xFF;
+    }
+    // APU normal read-only map
+    else if (address >= 0xFF10 && address <= 0xFF25) {
+        return io[address - 0xFF00];
+    }
+    // APU special read from audioMasterControl
+    else if (address == 0xFF26) {
+        return apu.read(); // handles special read of 0xFF26
+    }
     // I/O
     else if (address >= 0xFF00 && address <= 0xFF7F) {
         return io[address - 0xFF00];
@@ -99,6 +111,24 @@ void Memory::write(uint16_t address, uint8_t value) {
     else if (address == 0xFF00) {
         joypad.write(value); 
     }
+    // APU writes
+    else if (address >= 0xFF10 && address <= 0xFF26) {
+        uint8_t maskedValue = value;
+        if (address == 0xFF26) {
+            maskedValue &= 0x80;
+            // TODO: when apu is off, writes to msot sound registed are ignored
+            // If APU turning OFF, clear audio registers
+            if (!(maskedValue & 0x80)) {
+                for (uint16_t addr = 0xFF10; addr <= 0xFF25; addr++) {
+                    io[addr - 0xFF0] = 0;
+                }
+            }
+        }
+
+
+        io[address - 0xFF00] = maskedValue;
+        apu.write(address, maskedValue);
+    }
     // I/O
     else if (address >= 0xFF00 && address <= 0xFF7F) {
         io[address - 0xFF00] = value;
@@ -116,7 +146,7 @@ void Memory::write(uint16_t address, uint8_t value) {
     }
 }
 
-Memory::Memory(Joypad& joypad) : joypad(joypad) {
+Memory::Memory(Joypad& joypad, APU& apu) : joypad(joypad), apu(apu) {
     // Initialize size of memory allocations
     vram.resize(0x2000);
     wram.resize(0x2000);

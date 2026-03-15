@@ -44,8 +44,10 @@ int main() {
 
 
     Joypad joypad;
-    Memory memory(joypad);
+    APU apu;
+    Memory memory(joypad, apu);
     joypad.connectToMemory(&memory);
+    apu.connectToMemory(&memory);
 
     if (!memory.loadCartridge("pokemon.gb")) {
         std::cerr << "Failed to load cartridge" << std::endl;
@@ -59,7 +61,14 @@ int main() {
     SDL_Event e;
     bool running = true;
 
+    const double CPU_FREQ = 4194304.0;
+    const double FRAME_TIME = 1.0 / 59.7275;
+    uint64_t lastTime = SDL_GetPerformanceCounter();
+    double cycleBudget = 0;
+
     while (running) {
+
+        uint64_t frameStart = SDL_GetPerformanceCounter();
 
         while (SDL_PollEvent(&e)) {
             if (e.type == SDL_QUIT)
@@ -71,10 +80,20 @@ int main() {
         // Get keyboard data and store into joypad for reading
         joypad.update(state);
 
-        int cycles = cpu.step();
-        ppu.step(cycles);
+        uint64_t now = SDL_GetPerformanceCounter();
+        double elapsed = (double)(now - lastTime) / SDL_GetPerformanceFrequency();
 
-        if (ppu.getFrameReady()) {
+        lastTime = now;
+
+        cycleBudget += elapsed * CPU_FREQ;
+
+        while (cycleBudget >= 4) {
+
+            int cycles = cpu.step();
+            apu.step(cycles);
+            ppu.step(cycles);
+
+         if (ppu.getFrameReady()) {
 
             for (int y = 0; y < GB_HEIGHT; y++) {
                 for (int x = 0; x < GB_WIDTH; x++) {
@@ -90,7 +109,18 @@ int main() {
             SDL_RenderPresent(renderer);
 
             ppu.setFrameReady(false);
+        }           
+
+            cycleBudget -= cycles;
         }
+        uint64_t frameEnd = SDL_GetPerformanceCounter();
+        double frameElapsed = (double)(frameEnd - frameStart) / SDL_GetPerformanceFrequency();
+
+        if (frameElapsed < FRAME_TIME) {
+            SDL_Delay((FRAME_TIME - frameElapsed) * 1000.0);
+        }
+
+        frameStart = SDL_GetPerformanceCounter();
     }
 
 
