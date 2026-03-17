@@ -1,6 +1,15 @@
 # GBEmulatorCPP
 ## Description
 An emulator for the Game Boy written in C++ for Linux (However, you may easily compile on Windows. There are no Linux-specific parts in the code). This is not a fully functional every-day-use emulator. Instead, it was a proof-of-concept to test my understanding of lower-level hardware and learn with a fun project.
+
+## Images
+![Alt text](0.png)
+![Alt text](1.png)
+![Alt text](2.png)
+![Alt text](3.png)
+![Alt text](4.png)
+![Alt text](5.png)
+
 ## How to Use
 ### Linux
 1. If you don't have SDL2 on your Linux machine, run this first to install SDL2
