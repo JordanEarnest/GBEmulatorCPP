@@ -3,25 +3,25 @@
 An emulator for the Game Boy written in C++. Dependencies are SDL2.
 ## How to Use
 ### Linux
-If you don't have SDL2 on your Linux machine, run this first to install SDL2
+1. If you don't have SDL2 on your Linux machine, run this first to install SDL2
 
 ```
 sudo apt-get install libsdl2-dev
 ```
 
-1. Clone the repository
+2. Clone the repository
 
 ```
 git clone https://github.com/JordanEarnest/GBEmulatorCPP.git
 ```
 
-2. Compile
+3. Compile
 
 ```
 make
 ```
 
-3. Execute
+4. Execute
 
 ```
 ./gbemu
