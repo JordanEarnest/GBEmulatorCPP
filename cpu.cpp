@@ -20,12 +20,19 @@ CPU::CPU(Memory& mem) : memory(mem) {
     regs.PC = 0x0100;
 
     // Determines if CPU is in a STOPPED state (low power mode for saving)
-    stopped = false;
+    haulted = false;
     // Interrupt Master Enable Flag
     ime = false;
 };
 
 int CPU::step() {
+
+    if (haulted) {
+        int cycles = 4;
+        cycles += handleInterrupts();   // allow interrupts to wake CPU
+        return cycles;
+    }
+
     // Read opcode from memory and increment PC to next byte
     uint8_t opcode = fetch();
 
@@ -289,7 +296,6 @@ int CPU::execute(uint8_t opcode) {
         }
         // STOP n8
         case 0x10: {
-            stopped = true;
             regs.PC++; // skip padding byte n8, usually 0x00
             return 4;
         }
@@ -1260,7 +1266,7 @@ int CPU::execute(uint8_t opcode) {
         }
         // HALT
         case 0x76: {
-            stopped = true;
+            haulted = true;
             return 4;
         }
         // LD [HL], A
@@ -5759,6 +5765,9 @@ int CPU::handleInterrupts() {
     uint8_t IE = memory.read(0xFFFF);
 
     uint8_t pending = IE & IF;
+
+    if (pending)
+        haulted = false;
 
     if (!ime || !pending) return 0;
 

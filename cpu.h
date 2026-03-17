@@ -25,7 +25,7 @@ private:
     Memory& memory;
 
     // Determines if CPU is in a STOPPED state (low power mode for saving)
-    bool stopped;
+    bool haulted;
     // Interrupt Master Enable Flag
     bool ime;
     

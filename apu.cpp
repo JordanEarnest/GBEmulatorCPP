@@ -3,18 +3,20 @@
 
 APU::APU() {
     SDL_AudioSpec spec{};
-    spec.freq = 44100;
+    spec.freq = 48000;
     spec.format = AUDIO_F32SYS;
     spec.channels = 1;
-    spec.samples = 4096;
-    spec.callback = NULL;
+    spec.samples = 2048;
+    spec.callback = nullptr;   // IMPORTANT
 
     device = SDL_OpenAudioDevice(nullptr, 0, &spec, nullptr, 0);
-    float silence[1024] = {0};
-    SDL_QueueAudio(device, silence, sizeof(silence));
-    SDL_QueueAudio(device, silence, sizeof(silence));
 
     SDL_PauseAudioDevice(device, 0);
+
+    frameStep = 0;
+    sampleClock = 0;
+    frameClock = 0;
+    audioMasterControl = 0x80;
 }
 
 void APU::connectToMemory(Memory* memory) {
@@ -22,22 +24,40 @@ void APU::connectToMemory(Memory* memory) {
 }
 
 void APU::step(int cycles) { 
-    updateChannelRegisters();
+    //updateChannelRegisters();
     // advance channel waveforms
-    ch2.step(cycles);
-
     sampleClock += cycles;
+    frameClock += cycles;
+    
+    while (frameClock >= 8192) {
+        frameClock -= 8192;
+        frameStep = (frameStep + 1) & 7;
 
-    while (sampleClock >= 95) {
-        sampleClock -= 95;
+        if (frameStep % 2 == 0)
+            ch2.clockLength();
+
+        if (frameStep == 7)
+            ch2.clockEnvelope();
+
+    }
+
+    ch2.step(cycles);   
+
+    while (sampleClock >= CYCLES_PER_SAMPLE) {
+        sampleClock -= CYCLES_PER_SAMPLE;
 
         float sample = generateSample();
-        audioBuffer[bufferIndex++] = 0.25f;
-        //printf("sample: %f\n", sample);
-        //printf("%u\n", SDL_GetQueuedAudioSize(device));
-        if (bufferIndex >= 1024) {
-            if (SDL_GetQueuedAudioSize(device) < 16384)
-                SDL_QueueAudio(device, audioBuffer, bufferIndex * sizeof(float));
+
+        audioBuffer[bufferIndex++] = sample;
+
+        if (bufferIndex >= 8192) {
+
+            if (SDL_GetQueuedAudioSize(device) < 16384) {
+
+                SDL_QueueAudio(device, audioBuffer, sizeof(audioBuffer));
+
+            }
+
             bufferIndex = 0;
         }
     }
@@ -48,7 +68,7 @@ float APU::generateSample() {
 
     int mix = s2;
 
-    return mix / 30.0f;
+    return mix / 15.0f;
 }
 
 // Memory calls this, APU handles its own registers
@@ -67,10 +87,18 @@ void APU::write(uint16_t address, uint8_t value) {
         
         // Channel 2
         case 0xFF16: ch2.timerAndDuty = value; break;
-        case 0xFF17: ch2.volumeAndEnvelope = value; break;
+        case 0xFF17: 
+            ch2.volumeAndEnvelope = value;
+
+            ch2.volume = (value >> 4) & 0x0F;
+            ch2.envelopeIncrease = (value & 0x08) != 0;
+            ch2.envelopePeriod = value & 0x07;
+
+            break;
         case 0xFF18: ch2.periodLow = value; break;
         case 0xFF19: 
             ch2.periodHighAndControl = value;
+            ch2.lengthEnabled = value & 0x40; 
             if (value & 0x80) {
                 triggerChannel2();
             }
@@ -117,6 +145,11 @@ int APU::sampleChannel2() {
 
 void APU::triggerChannel2() {
     ch2.enabled = true;
+    ch2.lengthCounter = 64 - (ch2.timerAndDuty & 0x3F);
+    ch2.envelopeIncrease = (ch2.volumeAndEnvelope & 0x08) != 0;
+    ch2.envelopePeriod = ch2.volumeAndEnvelope & 0x07;
+    ch2.envelopeTimer = ch2.envelopePeriod;
+
     ch2.volume = (ch2.volumeAndEnvelope >> 4) & 0xF;
     ch2.dutyPosition = 0;
     uint16_t freq = ((ch2.periodHighAndControl & 0x07) << 8) | ch2.periodLow;
@@ -166,6 +199,10 @@ void APU::updateChannelRegisters() {
     ch2.periodLow = memory->read(0xFF18);
     ch2.periodHighAndControl = memory->read(0xFF19);
 }
+
+
+
+
 // Pulse Channel with Sweep Functionality
 void PulseSweepChannel::clearChannelRegisters() {
     sweep = 0;
@@ -194,4 +231,34 @@ void PulseChannel::step(int cycles) {
 
         dutyPosition = (dutyPosition + 1) & 7;
     }
+}
+void PulseChannel::clockLength() {
+    if (lengthEnabled && lengthCounter > 0) {
+        lengthCounter--;
+
+        if (lengthCounter == 0) {
+            enabled = false;
+        }
+    }   
+}
+void PulseChannel::clockEnvelope() {
+    if (!enabled)
+        return;
+
+    if (envelopePeriod == 0)
+        return;
+
+    envelopeTimer--;
+
+    if (envelopeTimer == 0) {
+        envelopeTimer = envelopePeriod;
+
+        if (envelopeIncrease) {
+            if (volume < 15)
+                volume++;
+        } else {
+            if (volume > 0)
+                volume--;
+        }
+    } 
 }

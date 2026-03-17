@@ -23,6 +23,14 @@ struct PulseSweepChannel {
 struct PulseChannel {
     bool enabled;
 
+    int lengthCounter;
+    bool lengthEnabled;
+
+    int intVolume;
+    int envelopeTimer;
+    int envelopePeriod;
+    bool envelopeIncrease;
+
     uint8_t volume;
     uint8_t dutyPosition;
 
@@ -38,6 +46,8 @@ struct PulseChannel {
 
     void clearChannelRegisters();
     void step(int cycles);
+    void clockLength();
+    void clockEnvelope();
 
     uint8_t getWaveDuty();
     uint8_t getInitialVolume();
@@ -67,7 +77,11 @@ class APU {
         PulseSweepChannel ch1;
         PulseChannel ch2;
         
-        int sampleClock;
+        double sampleClock;
+        int frameClock;
+        uint8_t frameStep;
+        const double CYCLES_PER_SAMPLE = 4194304.0 / 48000.0;
+
 
         static constexpr int dutyTable[4][8] = {
             {0,0,0,0,0,0,0,1},
@@ -76,7 +90,7 @@ class APU {
             {0,1,1,1,1,1,1,0}
         };
 
-        float audioBuffer[1024];
+        float audioBuffer[8192];
         int bufferIndex = 0;
 
         float generateSample();
@@ -84,6 +98,8 @@ class APU {
         void updateChannelRegisters();
 
         SDL_AudioDeviceID device;
+
+
     public:
         APU();
 

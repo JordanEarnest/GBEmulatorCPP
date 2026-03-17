@@ -120,7 +120,7 @@ void Memory::write(uint16_t address, uint8_t value) {
             // If APU turning OFF, clear audio registers
             if (!(maskedValue & 0x80)) {
                 for (uint16_t addr = 0xFF10; addr <= 0xFF25; addr++) {
-                    io[addr - 0xFF0] = 0;
+                    io[addr - 0xFF00] = 0;
                 }
             }
         }

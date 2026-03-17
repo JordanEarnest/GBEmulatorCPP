@@ -3,6 +3,7 @@
 #include "cpu.h"
 #include "ppu.h"
 #include "joypad.h"
+#include "apu.h"
 #include <iostream>
 #include <SDL2/SDL.h>
 
@@ -13,7 +14,7 @@ const int SCALE = 4;
 int main() {
 
     SDL_Init(SDL_INIT_VIDEO);
-
+    SDL_Init(SDL_INIT_AUDIO);
     SDL_Window* window = SDL_CreateWindow(
         "GameBoy",
         SDL_WINDOWPOS_CENTERED,
@@ -23,7 +24,7 @@ int main() {
         SDL_WINDOW_SHOWN
     );
 
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
     SDL_Texture* texture = SDL_CreateTexture(
         renderer,
@@ -61,14 +62,8 @@ int main() {
     SDL_Event e;
     bool running = true;
 
-    const double CPU_FREQ = 4194304.0;
-    const double FRAME_TIME = 1.0 / 59.7275;
-    uint64_t lastTime = SDL_GetPerformanceCounter();
-    double cycleBudget = 0;
-
     while (running) {
 
-        uint64_t frameStart = SDL_GetPerformanceCounter();
 
         while (SDL_PollEvent(&e)) {
             if (e.type == SDL_QUIT)
@@ -80,18 +75,16 @@ int main() {
         // Get keyboard data and store into joypad for reading
         joypad.update(state);
 
-        uint64_t now = SDL_GetPerformanceCounter();
-        double elapsed = (double)(now - lastTime) / SDL_GetPerformanceFrequency();
-
-        lastTime = now;
-
-        cycleBudget += elapsed * CPU_FREQ;
-
-        while (cycleBudget >= 4) {
-
+        int cyclesThisFrame = 0;
+        while (cyclesThisFrame < 70224) {
             int cycles = cpu.step();
+
+            cyclesThisFrame += cycles;
+
             apu.step(cycles);
             ppu.step(cycles);
+        }
+
 
          if (ppu.getFrameReady()) {
 
@@ -109,18 +102,7 @@ int main() {
             SDL_RenderPresent(renderer);
 
             ppu.setFrameReady(false);
-        }           
-
-            cycleBudget -= cycles;
-        }
-        uint64_t frameEnd = SDL_GetPerformanceCounter();
-        double frameElapsed = (double)(frameEnd - frameStart) / SDL_GetPerformanceFrequency();
-
-        if (frameElapsed < FRAME_TIME) {
-            SDL_Delay((FRAME_TIME - frameElapsed) * 1000.0);
-        }
-
-        frameStart = SDL_GetPerformanceCounter();
+        }       
     }
 
 
