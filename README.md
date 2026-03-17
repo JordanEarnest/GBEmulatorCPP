@@ -1,8 +1,14 @@
 # GBEmulatorCPP 🎮
 ## Description
-An emulator for the Game Boy written in C++.
+An emulator for the Game Boy written in C++. Dependencies are SDL2.
 ## How to Use
 ### Linux
+If you don't have SDL2 on your Linux machine, run this first to install SDL2
+
+```
+sudo apt-get install libsdl2-dev
+```
+
 1. Clone the repository
 
 ```
