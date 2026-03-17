@@ -1,6 +1,8 @@
 # GBEmulatorCPP
 ## Description
-An emulator for the Game Boy written in C++ for Linux (However, you may easily compile on Windows. There are no Linux-specific parts in the code). This is not a fully functional every-day-use emulator. Instead, it was a proof-of-concept to test my understanding of lower-level hardware and learn with a fun project.
+An emulator for the Game Boy written in C++ for Linux (However, you may easily compile on Windows. There are no Linux-specific parts in the code). This is not a fully functional every-day-use emulator. Instead, it was a proof-of-concept to test my understanding of lower-level hardware and learn with a fun project.<br>
+Currently, only games that use the same components of the Pokemon Red cartridge works. Also, the APU is glitchy and as a result, audio is scuffed.
+
 
 ## Images
 ![Alt text](0.png)
