@@ -1,21 +1,27 @@
-# GBEmulatorCPP 🎮
+# GBEmulatorCPP
 ## Description
-An emulator for the Game Boy written in C++.
+An emulator for the Game Boy written in C++ for Linux (However, you may easily compile on Windows. There are no Linux-specific parts in the code). This is not a fully functional every-day-use emulator. Instead, it was a proof-of-concept to test my understanding of lower-level hardware and learn with a fun project.
 ## How to Use
 ### Linux
-1. Clone the repository
+1. If you don't have SDL2 on your Linux machine, run this first to install SDL2
+
+```
+sudo apt-get install libsdl2-dev
+```
+
+2. Clone the repository
 
 ```
 git clone https://github.com/JordanEarnest/GBEmulatorCPP.git
 ```
 
-2. Compile
+3. Compile
 
 ```
 make
 ```
 
-3. Execute
+4. Execute
 
 ```
 ./gbemu
